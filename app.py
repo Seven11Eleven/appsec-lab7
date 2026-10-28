@@ -4,7 +4,7 @@ import os
 
 import requests
 import yaml
-from flask import Flask, redirect, render_template, render_template_string, request, session
+from flask import Flask, abort, redirect, render_template, render_template_string, request, session
 
 import database
 import utils
@@ -60,18 +60,25 @@ def login():
 
 @app.route("/calc")
 def calc():
-    """Простой вычислитель выражений, удобно для быстрых подсчётов в заметках."""
+    """Простой вычислитель выражений: безопасный AST-эвалюатор вместо eval."""
     expression = request.args.get("expr", "0")
-    result = eval(expression)
+    try:
+        result = utils.safe_eval(expression)
+    except (ValueError, SyntaxError, TypeError, OverflowError, ZeroDivisionError):
+        return {"error": "Некорректное выражение"}, 400
     return {"result": result}
 
 
 @app.route("/import", methods=["POST"])
 def import_notes():
-    """Импорт заметок из YAML (перенос из старой версии сервиса)."""
-    payload = yaml.load(request.form.get("yaml", ""), Loader=yaml.FullLoader)
-    for note in payload or []:
-        database.add_note(note.get("user", ""), note.get("title", ""), note.get("body", ""))
+    """Импорт заметок из YAML: используется только safe_load."""
+    payload = yaml.safe_load(request.form.get("yaml", ""))
+    if not isinstance(payload, list):
+        return {"error": "Ожидался список заметок"}, 400
+    for note in payload:
+        if not isinstance(note, dict):
+            return {"error": "Заметка должна быть отображением (dict)"}, 400
+        database.add_note(str(note.get("user", "")), str(note.get("title", "")), str(note.get("body", "")))
     return redirect("/")
 
 
@@ -101,16 +108,25 @@ def export():
 
 @app.route("/restore", methods=["POST"])
 def restore():
-    """Восстановление состояния сессии из снимка, который присылает клиент."""
-    blob = base64.b64decode(request.cookies.get("state", "gAR9"))
-    state = utils.restore_state(blob)
+    """Восстановление состояния сессии из JSON-снимка (формат v2)."""
+    blob = base64.b64decode(request.cookies.get("state", "e30="))
+    try:
+        state = utils.restore_state(blob)
+    except ValueError:
+        abort(400, description="Некорректный снимок состояния")
     return {"state": state}
 
 
 @app.route("/admin/maintenance", methods=["POST"])
 def maintenance():
-    """Административные задачи: запуск обслуживающих команд на сервере."""
-    return utils.run_maintenance(request.form["cmd"])
+    """Административные операции: фиксированный список действий вместо shell-команд."""
+    action = request.form.get("action", "")
+    if action == "clean_cache":
+        return {"removed": utils.clean_cache()}
+    if action == "vacuum_db":
+        database.vacuum()
+        return {"ok": True}
+    abort(400, description="Неизвестная административная операция")
 
 
 if __name__ == "__main__":
