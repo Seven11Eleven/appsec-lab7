@@ -82,11 +82,16 @@ def import_notes():
 
 @app.route("/updates")
 def updates():
-    """Прокси к API обновлений: клиент меняет только путь на доверенном хосте (защита от SSRF)."""
-    path = request.args.get("path", "/")
-    if not path.startswith("/") or ".." in path:
-        abort(400, description="Недопустимый путь")
-    response = requests.get(f"{UPDATES_URL}{path}", timeout=10)
+    """Прокси к API обновлений.
+
+    Адрес назначения определяется только сервером (UPDATES_URL): пользовательский
+    ввод не может менять хост или путь (защита от SSRF), он влияет лишь на
+    параметр `since`, который requests кодирует при самостоятельной сборке query.
+    """
+    since = request.args.get("since", "")
+    if since and not since.isdigit():
+        abort(400, description="Параметр since должен быть числом")
+    response = requests.get(f"{UPDATES_URL}/changes", params={"since": since}, timeout=10)
     return response.text
 
 
