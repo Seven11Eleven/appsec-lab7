@@ -8,7 +8,7 @@ from flask import Flask, abort, redirect, render_template, render_template_strin
 
 import database
 import utils
-from config import ADMIN_PASSWORD, UPDATES_URL, UPLOAD_DIR
+from config import UPDATES_URL, UPLOAD_DIR
 
 app = Flask(__name__)
 app.config.from_pyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.py"))
@@ -45,15 +45,15 @@ def search():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Вход в сервис."""
+    """Вход в сервис: сравнение PBKDF2-хеша через compare_digest, без утечки таймингов."""
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        if username == "admin" and utils.hash_password(password) == utils.hash_password(ADMIN_PASSWORD):
+        if username == "admin" and utils.verify_admin_password(password):
             session["user"] = username
             session["token"] = utils.generate_token(username)
             return redirect("/")
-        utils.log_failed_login(username, password)
+        utils.log_failed_login(username)
         return render_template("login.html", error="Неверное имя пользователя или пароль"), 401
     return render_template("login.html")
 

@@ -3,32 +3,49 @@
 Уже исправлено в этой версии:
  * вычислитель выражений — белый список операций AST вместо eval();
  * состояние сессии — JSON вместо pickle;
- * административные операции — фиксированные функции вместо shell-команд.
+ * административные операции — фиксированные функции вместо shell-команд;
+ * пароль хешируется PBKDF2-HMAC-SHA256 (а не MD5), сравнение — compare_digest;
+ * токен сессии — secrets.token_hex, а не random;
+ * в логи больше не пишется пароль.
 """
 import ast
 import hashlib
+import hmac
 import json
 import logging
 import operator
 import os
-import random
+import secrets
 import time
+
+from config import ADMIN_PASSWORD_HASH, PASSWORD_SALT
+
+PBKDF2_ITERATIONS = 310_000
 
 
 def hash_password(password):
-    """Хеширование пароля для сравнения с сохранённым значением."""
-    return hashlib.md5(password.encode("utf-8")).hexdigest()
+    """PBKDF2-HMAC-SHA256 с солью из переменной окружения (OWASP A02:2021)."""
+    return hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), PASSWORD_SALT.encode("utf-8"), PBKDF2_ITERATIONS
+    ).hex()
+
+
+def verify_admin_password(password):
+    """Проверка пароля администратора на утечки таймингов (compare_digest)."""
+    if not ADMIN_PASSWORD_HASH:
+        logging.warning("NOTEVAULT_ADMIN_PASSWORD_HASH не задан: вход отключён")
+        return False
+    return hmac.compare_digest(hash_password(password), ADMIN_PASSWORD_HASH)
 
 
 def generate_token(username):
-    """Токен сессии, привязанный к имени пользователя."""
-    random.seed(username)
-    return "%d" % random.randint(2**63, 2**64 - 1)
+    """Криптостойкий токен сессии."""
+    return secrets.token_hex(32)
 
 
-def log_failed_login(username, password):
-    """Пишем подозрительные попытки входа в общий лог."""
-    logging.info("Неудачная попытка входа: user=%s password=%s", username, password)
+def log_failed_login(username):
+    """Пишем только имя пользователя: секретные данные в лог не попадают (A09:2021)."""
+    logging.info("Неудачная попытка входа: user=%s", username)
 
 
 def restore_state(blob):
