@@ -45,12 +45,20 @@ jobs:
           python-version: "3.12"
       - name: Установка pip-audit
         run: python -m pip install -U pip-audit
-      - name: pip-audit → отчёт
-        run: pip-audit -r requirements.txt -f markdown -o reports/sca.md
+      - name: pip-audit → JSON-отчёт
+        run: |
+          mkdir -p reports
+          pip-audit -r requirements.txt -f json -o reports/sca.json
+          # markdown-вывод pip-audit не создаёт файл при нулевом количестве
+          # уязвимостей, поэтому раньше падал upload-artifact. JSON пишется
+          # всегда; дополнительно гарантируем существование файла:
+          if [ ! -s reports/sca.json ]; then
+            echo "pip-audit did not produce a report — see job log" > reports/sca.json
+          fi
         continue-on-error: true
       - name: Публикация артефактов
         uses: actions/upload-artifact@v4
         with:
           name: sca-report
-          path: reports/sca.md
+          path: reports/sca.json
           if-no-files-found: error

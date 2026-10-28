@@ -19,7 +19,9 @@ pip-audit-sca:
   image: python:3.12-slim
   script:
     - pip install pip-audit
-    - pip-audit -r requirements.txt -f markdown -o reports/sca.md || true
+    - pip-audit -r requirements.txt -f json -o reports/sca.json || true
+    # JSON-отчёт pip-audit пишет всегда; файл гарантируем на случай сбоя шага
+    - if [ ! -s reports/sca.json ]; then echo "pip-audit did not produce a report — see job log" > reports/sca.json; fi
   artifacts:
-    paths: [reports/sca.md]
+    paths: [reports/sca.json]
     when: always
