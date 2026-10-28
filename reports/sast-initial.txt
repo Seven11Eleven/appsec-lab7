@@ -1,0 +1,129 @@
+                    
+                    
+┌──────────────────┐
+│ 14 Code Findings │
+└──────────────────┘
+          
+    app.py
+    ❯❱ python.django.security.injection.raw-html-format.raw-html-format
+          Detected user input flowing into a manually constructed HTML string. You may be accidentally       
+          bypassing secure methods of rendering HTML by manually constructing HTML and this could create a   
+          cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure
+          this is safe, check that the HTML is rendered safely. Otherwise, use templates                     
+          (`django.shortcuts.render`) which will safely render HTML instead.                                 
+          Details: https://sg.run/oYj1                                                                       
+                                                                                                             
+           39┆ html = "<h1>Результаты поиска: %s</h1><ul>" % query
+   
+    ❯❱ python.flask.security.injection.raw-html-concat.raw-html-format
+          Detected user input flowing into a manually constructed HTML string. You may be accidentally       
+          bypassing secure methods of rendering HTML by manually constructing HTML and this could create a   
+          cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure
+          this is safe, check that the HTML is rendered safely. Otherwise, use templates                     
+          (`flask.render_template`) which will safely render HTML instead.                                   
+          Details: https://sg.run/Pb7e                                                                       
+                                                                                                             
+           39┆ html = "<h1>Результаты поиска: %s</h1><ul>" % query
+   
+    ❯❱ python.django.security.injection.raw-html-format.raw-html-format
+          Detected user input flowing into a manually constructed HTML string. You may be accidentally       
+          bypassing secure methods of rendering HTML by manually constructing HTML and this could create a   
+          cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure
+          this is safe, check that the HTML is rendered safely. Otherwise, use templates                     
+          (`django.shortcuts.render`) which will safely render HTML instead.                                 
+          Details: https://sg.run/oYj1                                                                       
+                                                                                                             
+           41┆ html += "<li>%s</li>" % row[2]
+   
+    ❯❱ python.flask.security.injection.raw-html-concat.raw-html-format
+          Detected user input flowing into a manually constructed HTML string. You may be accidentally       
+          bypassing secure methods of rendering HTML by manually constructing HTML and this could create a   
+          cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure
+          this is safe, check that the HTML is rendered safely. Otherwise, use templates                     
+          (`flask.render_template`) which will safely render HTML instead.                                   
+          Details: https://sg.run/Pb7e                                                                       
+                                                                                                             
+           41┆ html += "<li>%s</li>" % row[2]
+   
+    ❯❱ python.django.security.injection.code.user-eval.user-eval
+          Found user data in a call to 'eval'. This is extremely dangerous because it can enable an attacker
+          to execute arbitrary remote code on the system. Instead, refactor your code to not use 'eval' and 
+          instead use a safe library for the specific functionality you need.                               
+          Details: https://sg.run/PJDW                                                                      
+                                                                                                            
+           64┆ expression = request.args.get("expr", "0")
+           65┆ result = eval(expression)
+   
+   ❯❯❱ python.flask.security.injection.user-eval.eval-injection
+          Detected user data flowing into eval. This is code injection and should be avoided.
+          Details: https://sg.run/5QpX                                                       
+                                                                                             
+           65┆ result = eval(expression)
+   
+   ❯❯❱ python.django.security.injection.ssrf.ssrf-injection-requests.ssrf-injection-requests
+          Data from request object is passed to a new server-side request. This could lead to a server-side  
+          request forgery (SSRF). To mitigate, ensure that schemes and hosts are validated against an        
+          allowlist, do not forward the response to the user, and ensure proper authentication and transport-
+          layer security in the proxied request. See https://owasp.org/www-                                  
+          community/attacks/Server_Side_Request_Forgery to learn more about SSRF vulnerabilities.            
+          Details: https://sg.run/YvY4                                                                       
+                                                                                                             
+           81┆ url = request.args.get("url", UPDATES_URL)
+           82┆ response = requests.get(url)
+   
+   ❯❯❱ python.flask.security.injection.ssrf-requests.ssrf-requests
+          Data from request object is passed to a new server-side request. This could lead to a server-side  
+          request forgery (SSRF). To mitigate, ensure that schemes and hosts are validated against an        
+          allowlist, do not forward the response to the user, and ensure proper authentication and transport-
+          layer security in the proxied request.                                                             
+          Details: https://sg.run/J9LW                                                                       
+                                                                                                             
+           82┆ response = requests.get(url)
+   
+    ❯❱ python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host
+          Running flask app with host 0.0.0.0 could expose the server publicly.
+          Details: https://sg.run/eLby                                         
+                                                                               
+          117┆ app.run(host="0.0.0.0", port=5000, debug=True)
+   
+    ❯❱ python.flask.security.audit.debug-enabled.debug-enabled
+          Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will   
+          leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug'
+          using system environment variables.                                                                 
+          Details: https://sg.run/dKrd                                                                        
+                                                                                                              
+          117┆ app.run(host="0.0.0.0", port=5000, debug=True)
+            
+    utils.py
+    ❯❱ python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5
+          Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is
+          therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.               
+          Details: https://sg.run/vYrY                                                                   
+                                                                                                         
+           11┆ return hashlib.md5(password.encode("utf-8")).hexdigest()
+   
+    ❯❱ python.lang.security.audit.md5-used-as-password.md5-used-as-password
+          It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because  
+          it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function
+          such as scrypt. You can use `hashlib.scrypt`.                                                       
+          Details: https://sg.run/5DwD                                                                        
+                                                                                                              
+           11┆ return hashlib.md5(password.encode("utf-8")).hexdigest()
+   
+    ❯❱ python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure
+          Detected a python logger call with a potential hardcoded secret "Неудачная попытка входа: user=%s
+          password=%s" being logged. This may lead to secret credentials being exposed. Make sure that the 
+          logger is not logging  sensitive information.                                                    
+          Details: https://sg.run/ydNx                                                                     
+                                                                                                           
+           22┆ logging.info("Неудачная попытка входа: user=%s password=%s", username, password)
+   
+   ❯❯❱ python.lang.security.audit.subprocess-shell-true.subprocess-shell-true
+          Found 'subprocess' function 'run' with 'shell=True'. This is dangerous because this call will spawn
+          the command using a shell process. Doing so propagates current shell settings and variables, which 
+          makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.         
+          Details: https://sg.run/J92w                                                                       
+                                                                                                             
+           ▶▶┆ Autofix ▶ False
+           33┆ 'bash -c "%s"' % command, shell=True, capture_output=True, text=True
+

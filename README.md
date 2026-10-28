@@ -68,6 +68,26 @@ git push origin fix/security
 # CI приложит отчёты по изменениям, редьвьюер (одногруппник) оставит Code Review
 ```
 
+## Результаты первичного сканирования (main, до фиксов)
+
+Отчёты лежат в `reports/` (снимок задокументирован отдельным коммитом, см. историю):
+- **SAST (semgrep, p/python + p/secrets)**: 14 находок — XSS (`raw-html-format`), `eval` → RCE
+  (`user-eval`, `eval-injection`), SSRF (`ssrf-requests`), `debug=True` + `host 0.0.0.0`
+  (`debug-enabled`, `avoid_app_run_with_bad_host`), MD5 для паролей (`insecure-hash-algorithms-md5`,
+  `md5-used-as-password`), пароль в логах (`python-logger-credential-disclosure`), `shell=True`
+  (`subprocess-shell-true`);
+- **SAST (bandit)**: 12 issues (3 High, 9 Medium) — в т.ч. SQL-инъекции (B608), pickle.loads (B301),
+  yaml.load (B506), eval (B307), hardcoded секреты (B105), bind 0.0.0.0 (B104);
+- **SCA (pip-audit)**: 33 известные уязвимости (CVE/PYSEC) в 6 упаковках из `requirements.txt`
+  (Flask, Werkzeug, Jinja2, requests, urllib3, gunicorn).
+
+Скрины/файлы: `reports/sast-initial.{txt,json,sarif}`, `reports/sast-bandit-initial.{txt,json}`,
+`reports/sca-initial.md`.
+
+> Сканирования воспроизводятся командами из раздела «Как защитить лабу».
+> SAST-сканы (semgrep, bandit) запускаются на своём Python; для SCA нужен Python ≥ 3.10
+> (в CI установлен 3.12), т.к. новые версии запросов к пакетам требуют соответствующие interpreter.
+
 ## Что мы фиксим (summary)
 
 | Проблема | Класс OEM | Endpoints/файлы |

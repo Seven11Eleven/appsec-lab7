@@ -1,0 +1,36 @@
+
+Name | Version | ID | Fix Versions
+--- | --- | --- | ---
+flask | 2.2.2 | PYSEC-2023-62 | 2.2.5,2.3.2
+flask | 2.2.2 | PYSEC-2026-2151 | 3.1.3
+werkzeug | 2.2.2 | PYSEC-2023-58 | 2.2.3
+werkzeug | 2.2.2 | PYSEC-2023-57 | 2.2.3
+werkzeug | 2.2.2 | PYSEC-2023-221 | 2.3.8,3.0.1
+werkzeug | 2.2.2 | PYSEC-2026-2046 | 3.1.4
+werkzeug | 2.2.2 | PYSEC-2026-2045 | 3.0.6
+werkzeug | 2.2.2 | PYSEC-2026-2044 | 3.1.5
+werkzeug | 2.2.2 | PYSEC-2026-2043 | 3.0.3
+werkzeug | 2.2.2 | PYSEC-2026-2320 | 3.1.6
+werkzeug | 2.2.2 | PYSEC-2026-3417 | 3.0.6
+werkzeug | 2.2.2 | PYSEC-2026-4312 | 3.1.9
+jinja2 | 3.1.2 | PYSEC-2026-1473 | 3.1.3
+jinja2 | 3.1.2 | PYSEC-2026-1471 | 3.1.6
+jinja2 | 3.1.2 | PYSEC-2026-1474 | 3.1.4
+jinja2 | 3.1.2 | PYSEC-2026-1475 | 3.1.5
+jinja2 | 3.1.2 | PYSEC-2026-1472 | 3.1.5
+requests | 2.28.1 | PYSEC-2023-74 | 2.31.0
+requests | 2.28.1 | PYSEC-2026-1873 | 2.32.0
+requests | 2.28.1 | PYSEC-2026-1872 | 2.32.4
+requests | 2.28.1 | PYSEC-2026-2275 | 2.33.0
+urllib3 | 1.26.7 | PYSEC-2023-192 | 1.26.17,2.0.6
+urllib3 | 1.26.7 | PYSEC-2023-212 | 1.26.18,2.0.7
+urllib3 | 1.26.7 | PYSEC-2026-141 | 2.7.0
+urllib3 | 1.26.7 | PYSEC-2026-1999 | 2.5.0
+urllib3 | 1.26.7 | PYSEC-2026-1998 | 2.6.0
+urllib3 | 1.26.7 | PYSEC-2026-1995 | 1.26.19,2.2.2
+urllib3 | 1.26.7 | PYSEC-2026-1994 | 2.6.0
+urllib3 | 1.26.7 | PYSEC-2026-1996 | 2.6.3
+urllib3 | 1.26.7 | PYSEC-2026-4177 | 2.8.0
+urllib3 | 1.26.7 | PYSEC-2026-4175 | 2.8.0
+gunicorn | 20.1.0 | PYSEC-2026-1434 | 22.0.0
+gunicorn | 20.1.0 | PYSEC-2026-1433 | 22.0.0
