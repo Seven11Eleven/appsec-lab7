@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>NoteVault — вход</title>
+</head>
+<body>
+    <h1>Вход в NoteVault</h1>
+    {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+    <form action="/login" method="post">
+        <input type="text" name="username" placeholder="Логин">
+        <input type="password" name="password" placeholder="Пароль">
+        <button type="submit">Войти</button>
+    </form>
+</body>
+</html>

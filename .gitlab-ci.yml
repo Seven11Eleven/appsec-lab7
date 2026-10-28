@@ -1,0 +1,25 @@
+# SAST/SCA-сканирование репозитория (Lab #7).
+# Отчёты складываются в отчёты вместе с результатами работы — в reports/.
+
+stages: [security]
+
+semgrep-sast:
+  stage: security
+  image: semgrep/semgrep:latest
+  script:
+    - mkdir -p reports
+    - semgrep scan --config p/python --config p/secrets --exclude reports --exclude .git --sarif -o reports/sast.sarif || true
+    - semgrep scan --config p/python --config p/secrets --exclude reports --exclude .git --text > reports/sast.txt || true
+  artifacts:
+    paths: [reports/]
+    when: always
+
+pip-audit-sca:
+  stage: security
+  image: python:3.12-slim
+  script:
+    - pip install pip-audit
+    - pip-audit -r requirements.txt -f markdown -o reports/sca.md || true
+  artifacts:
+    paths: [reports/sca.md]
+    when: always
