@@ -20,9 +20,20 @@ reports/        — результаты SAST/SCA-сканирования
 
 ## Запуск (локально)
 
+Для ветки `fix/security` (обновлённые зависимости) нужен Python ≥ 3.10 — используйте
+системный `/usr/bin/python3.11` или `python3.13` (на pyenv-3.9 новые urllib3/requests
+недоступны). На ветке `main` (старые зависимости) достаточно и `python3` (3.9).
+
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
+python3.11 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
+
+# обязательные переменные окружения (секреты не в коде):
+export NOTEVAULT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+
+# хеш пароля админа (PBKDF2): сгенерировать и передать в сервис
+export NOTEVAULT_ADMIN_PASSWORD_HASH="$(python -c "from utils import hash_password; print(hash_password('Цепкий_пароль_2024'))")"
+
 python app.py
 # или: gunicorn -w 2 app:app -b 127.0.0.1:5000
 ```
@@ -88,22 +99,30 @@ git push origin fix/security
 > SAST-сканы (semgrep, bandit) запускаются на своём Python; для SCA нужен Python ≥ 3.10
 > (в CI установлен 3.12), т.к. новые версии запросов к пакетам требуют соответствующие interpreter.
 
-## Что мы фиксим (summary)
+## Результаты повторного сканирования (fix/security, после фиксов)
 
-| Проблема | Класс OEM | Endpoints/файлы |
-|---|---|---|
-| SQL-инъекция | A03:2021 | `database.py` (`find_notes`, `search_notes`, `add_note`) |
-| XSS | A03:2021 | `app.py /search` |
-| `eval` → RCE | A06/A05 | `app.py /calc` |
-| Insecure deserialization (pickle) | A08:2021 | `app.py /restore`, `utils.py` |
-| YAML RCE | A08:2021 | `app.py /import` |
-| SSRF | A10:2021 | `app.py /updates` |
-| Path traversal | A01:2021 | `app.py /files` |
-| Open redirect | A01:2021 | `app.py /export` |
-| Shell injection | A03:2021 | `utils.py run_maintenance`, `app.py /admin/maintenance` |
-| Слабое хеширование паролей (MD5) | A02:2021 | `utils.py` |
-| Токены через `random` | A02:2021 | `utils.py generate_token` |
-| Секреты в коде | A07:2021 | `config.py` |
-| Пароль в логах | A09:2021 | `utils.py log_failed_login` |
-| Debug=True в проде | A05:2021 | `app.py`, `config.py` |
-| Устаревшие зависимости (CVE) | A06:2021 | `requirements.txt` |
+| Скан | До (main) | После (fix/security) | Отчёты |
+|---|---|---|---|
+| SAST semgrep (p/python + p/secrets) | 14 findings | **0 findings** | `sast-initial.txt|json` → `sast-after.txt|json` |
+| SAST bandit | 12 issues | **No issues identified** | `sast-bandit-initial.*` → `bandit-after.txt|json` |
+| SCA pip-audit | 33 уязвимости в 6 пакетах | **No known vulnerabilities found** | `sca-initial.md` → `sca-after.md|json` |
+
+## Маппинг уязвимость → исправление (фиксы в PR)
+
+| Проблема | Класс | Где было | Исправление (коммит в PR) |
+|---|---|---|---|
+| SQL-инъекция | A03:2021 | `database.py` (`init_db`, `find_notes`, `search_notes`, `add_note`) | плейсхолдеры `?` вместо `%`/f-string/`format` — `8469a43` |
+| `eval` → RCE | A06/A05 | `app.py /calc` | AST-эвалюатор по белому списку операций (`utils.safe_eval`) — `6dd2f8f` |
+| Insecure deserialization (pickle) | A08:2021 | `app.py /restore`, `utils.py restore_state` | снапшоты сессии — JSON, pickle убран — `6dd2f8f` |
+| YAML RCE | A08:2021 | `app.py /import` (`FullLoader`) | `yaml.safe_load` + проверка структуры — `6dd2f8f` |
+| Shell injection | A03:2021 | `utils.py run_maintenance`, `app.py /admin/maintenance` | только фиксированные операции (`clean_cache`/`vacuum_db`), `shell=True` удалён — `6dd2f8f` |
+| Слабое хеширование паролей (MD5) | A02:2021 | `utils.py hash_password` | PBKDF2-HMAC-SHA256 (310k iter, соль из env) — `1ba51f3` |
+| Токены через `random` | A02:2021 | `utils.py generate_token` | `secrets.token_hex(32)` — `1ba51f3` |
+| Пароль в логах | A09:2021 | `utils.py log_failed_login` | логируется только имя пользователя — `1ba51f3` |
+| Секреты в коде | A07:2021 | `config.py` (SECRET_KEY, ADMIN_PASSWORD) | env-переменные (`NOTEVAULT_SECRET_KEY`, `NOTEVAULT_ADMIN_PASSWORD_HASH`) — `1ba51f3` |
+| XSS | A03:2021 | `app.py /search` (`render_template_string`, ручной HTML) | `render_template` + автоэскейп (`templates/search.html`) — `b92d384` |
+| SSRF | A10:2021 | `app.py /updates` (`requests.get` по url от клиента) | URL целиком на сервере, клиент задаёт только `since`-параметр + `timeout` — `b92d384`, `bde8f22` |
+| Path traversal | A01:2021 | `app.py /files` (`os.path.join` + `open`) | `basename` + `realpath`-проверка внутри `UPLOAD_DIR` — `b92d384` |
+| Open redirect | A01:2021 | `app.py /export` | redirect только локальных относительных путей — `b92d384` |
+| Debug=True в проде | A05:2021 | `app.py`, `config.py` | `DEBUG` из env (по умолчанию False), host 127.0.0.1 — `b92d384` |
+| Устаревшие зависимости (CVE) | A06:2021 | `requirements.txt` (Flask 2.2.2, Werkzeug 2.2.2, Jinja2 3.1.2, requests 2.28.1, urllib3 1.26.7, gunicorn 20.1.0) | актуальные пины без известных CVE — `0b47f45` |

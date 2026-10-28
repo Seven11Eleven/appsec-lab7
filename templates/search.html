@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>NoteVault — поиск</title>
+</head>
+<body>
+    <h1>Результаты поиска: {{ query }}</h1>
+    {% if not notes %}
+        <p>Ничего не найдено.</p>
+    {% endif %}
+    <ul>
+        {% for note in notes %}
+            <li><b>{{ note[2] }}</b> — {{ note[3] }}</li>
+        {% endfor %}
+    </ul>
+    <p><a href="/">Назад</a></p>
+</body>
+</html>
