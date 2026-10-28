@@ -1,11 +1,14 @@
-# Зависимости NoteVault, список зафиксирован на момент сборки образа (2024-03).
-# Обновляем частично, т.к. были случаи поломки при обновлении ядра.
-Flask==2.2.2
-Werkzeug==2.2.2
-Jinja2==3.1.2
-click==8.1.3
-itsdangerous==2.0.1
-requests==2.28.1
-urllib3==1.26.7
-PyYAML==6.0.1
-gunicorn==20.1.0
+# Зависимости NoteVault после обновления по результатам SCA (pip-audit).
+# Зафиксированы исправленные версии; для сборки необходим Python >= 3.10,
+# т.к. актуальные urllib3/requests больше не поддерживают Python 3.9.
+# В CI скан заканчивается на python 3.12 — см. reports/sca-after.md.
+Flask==3.1.3
+Werkzeug==3.1.9
+Jinja2==3.1.6
+MarkupSafe==3.0.4
+click==8.1.8
+itsdangerous==2.2.0
+requests==2.33.0
+urllib3==2.8.0
+PyYAML==6.0.3
+gunicorn==23.0.0
